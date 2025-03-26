@@ -48,37 +48,37 @@ regd_users.post("/login", (req,res) => {
     }
 });
 
-const isExistBook = (bookauthor, booktitle)=>{ //returns boolean
-    //write code to check is the username is valid
-        let bookWithSameTitleAndAuthor = books.filter(
-            book => book.title === booktitle && book.author === bookauthor
-        );
-        return (bookWithSameTitleAndAuthor.length > 0) ? true : false;
-    }
 
 // Add a book review
 regd_users.put("/auth/review/:isbn", (req, res) => {
-  //Write your code here
-  const bookauthor = req.body.author;
-  const booktitle = req.body.title;
-  const bookreviews = req.body.reviews;
 
-  if ( bookauthor && booktitle) {
-    if (!isExistBook(bookauthor, booktitle)) {
-        books[Object.keys(books).length] = {
-            "author": bookauthor,
-            "title": booktitle,
-             "reviews": bookreviews
-          }
-        return res.status(200).json({message: "Book successfully registered."});  
-    } else {
-        return res.status(404).json({message: "Book already exists!"});  
+    const isbn = req.params.isbn;
+    let filtered_book = books[isbn]
+    if (filtered_book) {
+        let review = req.query.review;
+        let reviewer = req.session.authorization['username'];
+        if(review) {
+            filtered_book['reviews'][reviewer] = review;
+            books[isbn] = filtered_book;
+        }
+        res.send(`The review for the book with ISBN  ${isbn} has been added/updated.`);
     }
-  } else {
-    return res.status(404).json({message: "Unable to register book"});
-  }
-  
-});
+    else{
+        res.send("Unable to find this ISBN!");
+    }
+  });
+
+regd_users.delete("/auth/review/:isbn/", (req, res) => {
+    const isbn = req.params.isbn;
+    console.log("ISBN:", isbn);
+
+    if (books[isbn]) {
+        books[isbn].reviews = {}; // Delete the specific review
+        return res.status(200).json({ message: "Book review successfully deleted." });
+        } else {
+            return res.status(404).json({ message: "Book doesn't exist!" });
+        }
+    });
 
 module.exports.authenticated = regd_users;
 module.exports.isValid = isValid;
