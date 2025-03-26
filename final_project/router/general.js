@@ -44,37 +44,43 @@ public_users.get('/isbn/:isbn',function (req, res) {
  });
   
 // Get book details based on author
-public_users.get('/author/:author',function (req, res) {
-  //Write your code here
-  try {
-    res.read(JSON.stringify(
-        books.filter(book => book.author === req.params.author)
-      ))
-    return res.status(200).json({message: "book details based on author is shown"});
-  } catch(err) {
-    return res.status(404).json({message: err});
-  }
-});
+public_users.get('/author/:author', function (req, res) {
+    try {
+      const authorName = req.params.author;
+      const foundBooks = Object.values(books).filter(book => book.author === authorName);
+  
+      if (foundBooks.length > 0) {
+        return res.status(200).json(foundBooks); // Return the found books
+      } else {
+        return res.status(404).json({ message: "No books found for this author." });
+      }
+    } catch (err) {
+      return res.status(500).json({ message: "Internal Server Error" });
+    }
+  });
 
 // Get all books based on title
-public_users.get('/title/:title',function (req, res) {
-  //Write your code here
-  try {
-    res.read(JSON.stringify(
-        books.filter(book => book.title === req.params.title)
-      ))
-      return res.status(200).json({message: "all books based on title are shown"});
-  } catch(err) {
-    return res.status(404).json({message: err});
-  }
-});
+public_users.get('/title/:title', function (req, res) {
+    try {
+      const title = req.params.title;
+      const foundBooks = Object.values(books).filter(book => book.title === title);
+  
+      if (foundBooks.length > 0) {
+        return res.status(200).json(foundBooks);
+      } else {
+        return res.status(404).json({ message: "No books found with this title." });
+      }
+    } catch (err) {
+      console.error(err); // Log the error for debugging
+      return res.status(500).json({ message: "Internal Server Error" });
+    }
+  });
 
 //  Get book review
-public_users.get('/review/:isbn',function (req, res) {
+public_users.get('/reviews/:isbn',function (req, res) {
   //Write your code here
   try {
-    res.read(JSON.stringify(books[req.params.isbn].reviews))
-    return res.status(200).json({message: "The reveiws of the book is shown"});
+    return res.status(200).json({message: books[req.params.isbn].reviews});
   } catch(err) {
     return res.status(404).json({message: err});
   }
