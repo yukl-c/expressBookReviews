@@ -32,15 +32,15 @@ regd_users.post("/login", (req,res) => {
 
   if (!loginUserName || !loginPassword) {return res.status(404).json({message: "Missing Input"});}
 
-  if (authenticatedUser(username, password)) {
+  if (authenticatedUser(loginUserName, loginPassword)) {
         // Generate JWT access token
         let accessToken = jwt.sign({
-            data: password
-        }, 'access', { expiresIn: 60 * 60 });
+            data: loginPassword
+        }, 'access', { expiresIn: 60 });
 
         // Store access token and username in session
         req.session.authorization = {
-            accessToken, username
+            accessToken, loginUserName
         }
         return res.status(200).send("User successfully logged in");
     } else {
