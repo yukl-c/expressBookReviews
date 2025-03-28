@@ -94,7 +94,8 @@ regd_users.delete("/:isbn/", (req, res) => {
         } catch(err) {
             return res.status(404).json({ message: "Book doesn't exist!" });
         }
-    });
+    }
+});
 
 module.exports.authenticated = regd_users;
 module.exports.isValid = isValid;
