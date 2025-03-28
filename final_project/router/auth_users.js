@@ -73,7 +73,7 @@ regd_users.put("/:isbn", async (req, res) => {
             // If you have an async operation, it would look something like this:
             // await saveReviewToDatabase(isbn, req.body.review);
 
-            return res.status(200).send(`The review for the book with ISBN ${isbn} has been added/updated.`);
+            return res.status(200).send(`The review for the book with ISBN ${isbn} has been added/updated. Current review: ${books[isbn].reviews}`);
         } catch (error) {
             console.error("Error updating review:", error);
             return res.status(500).json({ message: "Internal Server Error" });
