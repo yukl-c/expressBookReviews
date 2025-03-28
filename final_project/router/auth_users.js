@@ -48,9 +48,14 @@ regd_users.post("/login", (req,res) => {
     }
 });
 
+// Main endpoint to be accessed by authenticated users
+regd_users.get("/auth/get_message", (req, res) => {
+    return res.status(200).json({ message: "Hello, You are an authenticated user. Congratulations!" });
+  });
+
 
 // Add a book review
-regd_users.put("/:isbn", async (req, res) => {
+regd_users.put("/auth/review/:isbn", async (req, res) => {
     const isbn = req.params.isbn;
     console.log("ISBN:", isbn);
     const newComment = req.body.review;
@@ -83,7 +88,7 @@ regd_users.put("/:isbn", async (req, res) => {
     }
 });
 
-regd_users.delete("/:isbn/", (req, res) => {
+regd_users.delete("/auth/review/:isbn", (req, res) => {
     const isbn = req.params.isbn;
     console.log("ISBN:", isbn);
 
@@ -97,6 +102,6 @@ regd_users.delete("/:isbn/", (req, res) => {
     }
 });
 
-module.exports.authenticated = regd_users;
+module.exports.authenticated = regd_users; // module.exports.authenticated = regd_users;
 module.exports.isValid = isValid;
 module.exports.users = users;
