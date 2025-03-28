@@ -50,33 +50,48 @@ regd_users.post("/login", (req,res) => {
 
 
 // Add a book review
-regd_users.put("/auth/review/:isbn", (req, res) => {
-
+regd_users.put("/:isbn", async (req, res) => {
     const isbn = req.params.isbn;
-    let filtered_book = books[isbn];
-    console.log(filtered_book);
-    if (filtered_book) {
-        let review = req.body.review;
-        // let reviewer = req.session.authorization['username'];
-        if(review) {
-            filtered_book['reviews'] = review; // [reviewer]
-            books[isbn] = filtered_book;
-        }
-        res.send(`The review for the book with ISBN  ${isbn} has been added/updated.`);
-    }
-    else{
-        res.send("Unable to find this ISBN!");
-    }
-  });
+    console.log("ISBN:", isbn);
+    const newComment = req.body.review;
+    // Log the request body for debugging
+    console.log("Request review:", newComment);
 
-regd_users.delete("/auth/review/:isbn/", (req, res) => {
+    if (!newComment) {
+        return res.status(400).json({ message: "Review content is required." });
+    }
+
+    let filtered_book = books[isbn];
+    
+    if (filtered_book) {
+        try {
+            // Simulate an asynchronous operation (e.g., database save)
+            // Assuming you might have a function to save the review
+            filtered_book['reviews'] = newComment; // Update review
+            books[isbn] = filtered_book;
+
+            // If you have an async operation, it would look something like this:
+            // await saveReviewToDatabase(isbn, req.body.review);
+
+            return res.status(200).send(`The review for the book with ISBN ${isbn} has been added/updated.`);
+        } catch (error) {
+            console.error("Error updating review:", error);
+            return res.status(500).json({ message: "Internal Server Error" });
+        }
+    } else {
+        return res.status(404).json({ message: "Unable to find this ISBN!" });
+    }
+});
+
+regd_users.delete("/:isbn/", (req, res) => {
     const isbn = req.params.isbn;
     console.log("ISBN:", isbn);
 
     if (books[isbn]) {
-        books[isbn].reviews = {}; // Delete the specific review
-        return res.status(200).json({ message: "Book review successfully deleted." });
-        } else {
+        try {
+            books[isbn].reviews = {}; // Delete the specific review
+            return res.status(200).json({ message: "Book review successfully deleted." });
+        } catch(err) {
             return res.status(404).json({ message: "Book doesn't exist!" });
         }
     });
