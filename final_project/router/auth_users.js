@@ -1,9 +1,43 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 let books = require("./booksdb.js");
+const csvParser = require('csv-parser');
+const fs = require('fs');
+const bodyParser = require('body-parser');
+
 const regd_users = express.Router();
 
 let users = [];
+
+// Middleware to parse incoming JSON requests
+regd_users.use(bodyParser.json());
+
+// Load users from CSV file into memory
+function loadUsersFromCSV() {
+    return new Promise((resolve, reject) => {
+        const userArray = [];
+        fs.createReadStream('./router/users.csv')
+            .pipe(csvParser())
+            .on('data', (row) => {
+                userArray.push(row);
+            })
+            .on('end', () => {
+                console.log('CSV file successfully processed');
+                resolve(userArray);
+            })
+            .on('error', (err) => {
+                reject(err);
+            });
+    });
+}
+
+// Load users data when the server starts
+loadUsersFromCSV()
+    .then((userArray) => {
+        users = userArray;
+        console.log(users);
+    })
+    .catch((err) => console.error(err));
 
 const isValid = (username)=>{ //returns boolean
 //write code to check is the username is valid
@@ -36,7 +70,7 @@ regd_users.post("/login", (req,res) => {
         // Generate JWT access token
         let accessToken = jwt.sign({
             data: loginPassword
-        }, 'access', { expiresIn: 60 });
+        }, 'access', { expiresIn: 60 * 10 });
 
         // Store access token and username in session
         req.session.authorization = {
