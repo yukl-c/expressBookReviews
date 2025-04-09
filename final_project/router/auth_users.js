@@ -9,6 +9,9 @@ const regd_users = express.Router();
 
 let users = [];
 
+// invalid token after logout
+let blacklist = new Set();
+
 // Middleware to parse incoming JSON requests
 regd_users.use(bodyParser.json());
 
@@ -136,6 +139,22 @@ regd_users.delete("/auth/review/:isbn", (req, res) => {
     }
 });
 
+regd_users.post("/auth/logout", (req, res) => {
+    if (req.session.authorization) { // Get the authorization object stored in the session
+        token = req.session.authorization['accessToken'];
+        blacklist.add(token);
+        req.session.destroy((err) => {
+            if (err) {
+                return res.status(500).json({ message: 'Error logging out' });
+            }
+            return res.status(200).json({ message: 'User successfully logged out' });
+        });
+    } else {
+        return res.status(400).json({ message: 'Authorization token not provided' });
+    }
+ });
+
 module.exports.authenticated = regd_users; // module.exports.authenticated = regd_users;
 module.exports.isValid = isValid;
 module.exports.users = users;
+module.exports.blacklist = blacklist;
