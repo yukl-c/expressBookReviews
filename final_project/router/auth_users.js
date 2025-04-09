@@ -70,11 +70,7 @@ regd_users.post("/login", (req,res) => {
         // Generate JWT access token
         let accessToken = jwt.sign({
             data: loginPassword
-<<<<<<< HEAD
         }, 'access', { expiresIn: 60 * 10 });
-=======
-        }, 'access', { expiresIn: 60 });
->>>>>>> aaaf41aebdcf271eb4cc905ca8491b6378998313
 
         // Store access token and username in session
         req.session.authorization = {
@@ -86,40 +82,6 @@ regd_users.post("/login", (req,res) => {
     }
 });
 
-<<<<<<< HEAD
-
-// Add a book review
-regd_users.put("/auth/review/:isbn", (req, res) => {
-
-    const isbn = req.params.isbn;
-    let filtered_book = books[isbn];
-    console.log(filtered_book);
-    if (filtered_book) {
-        let review = req.body.review;
-        // let reviewer = req.session.authorization['username'];
-        if(review) {
-            filtered_book['reviews'] = review; // [reviewer]
-            books[isbn] = filtered_book;
-        }
-        res.send(`The review for the book with ISBN  ${isbn} has been added/updated.`);
-    }
-    else{
-        res.send("Unable to find this ISBN!");
-    }
-  });
-
-regd_users.delete("/auth/review/:isbn/", (req, res) => {
-    const isbn = req.params.isbn;
-    console.log("ISBN:", isbn);
-
-    if (books[isbn]) {
-        books[isbn].reviews = {}; // Delete the specific review
-        return res.status(200).json({ message: "Book review successfully deleted." });
-        } else {
-            return res.status(404).json({ message: "Book doesn't exist!" });
-        }
-    });
-=======
 // Main endpoint to be accessed by authenticated users
 regd_users.get("/auth/get_message", (req, res) => {
     return res.status(200).json({ message: "Hello, You are an authenticated user. Congratulations!" });
@@ -159,7 +121,6 @@ regd_users.put("/auth/review/:isbn", async (req, res) => {
         return res.status(404).json({ message: "Unable to find this ISBN!" });
     }
 });
->>>>>>> aaaf41aebdcf271eb4cc905ca8491b6378998313
 
 regd_users.delete("/auth/review/:isbn", (req, res) => {
     const isbn = req.params.isbn;

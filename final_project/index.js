@@ -12,22 +12,6 @@ app.use("/customer",session({secret:"fingerprint_customer",resave: true, saveUni
 
 // Middleware to authenticate users using JWT
 app.use("/customer/auth/*", function auth(req,res,next){
-<<<<<<< HEAD
-    if (req.session.authorization) { // Get the authorization object stored in the session
-        token = req.session.authorization['accessToken']; // Retrieve the token from authorization object
-        jwt.verify(token, "access", (err, user) => { // Use JWT to verify token
-          if (!err) {
-            req.user = user;
-            next();
-          } else {
-            return res.status(403).json({ message: "User not authenticated" });
-          }
-        });
-      } else {
-        return res.status(403).json({ message: "User not logged in" });
-      }
-    });
-=======
 if (req.session.authorization) { // Get the authorization object stored in the session
     token = req.session.authorization['accessToken']; // Retrieve the token from authorization object
     jwt.verify(token, "access", (err, user) => { // Use JWT to verify token
@@ -42,7 +26,6 @@ if (req.session.authorization) { // Get the authorization object stored in the s
     return res.status(403).json({ message: "User not logged in" });
   }
 });
->>>>>>> aaaf41aebdcf271eb4cc905ca8491b6378998313
  
 const PORT =5000;
 
