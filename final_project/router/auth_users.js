@@ -70,7 +70,11 @@ regd_users.post("/login", (req,res) => {
         // Generate JWT access token
         let accessToken = jwt.sign({
             data: loginPassword
+<<<<<<< HEAD
         }, 'access', { expiresIn: 60 * 10 });
+=======
+        }, 'access', { expiresIn: 60 });
+>>>>>>> aaaf41aebdcf271eb4cc905ca8491b6378998313
 
         // Store access token and username in session
         req.session.authorization = {
@@ -82,6 +86,7 @@ regd_users.post("/login", (req,res) => {
     }
 });
 
+<<<<<<< HEAD
 
 // Add a book review
 regd_users.put("/auth/review/:isbn", (req, res) => {
@@ -114,7 +119,62 @@ regd_users.delete("/auth/review/:isbn/", (req, res) => {
             return res.status(404).json({ message: "Book doesn't exist!" });
         }
     });
+=======
+// Main endpoint to be accessed by authenticated users
+regd_users.get("/auth/get_message", (req, res) => {
+    return res.status(200).json({ message: "Hello, You are an authenticated user. Congratulations!" });
+  });
 
-module.exports.authenticated = regd_users;
+
+// Add a book review
+regd_users.put("/auth/review/:isbn", async (req, res) => {
+    const isbn = req.params.isbn;
+    console.log("ISBN:", isbn);
+    const newComment = req.body.review;
+    // Log the request body for debugging
+    console.log("Request review:", newComment);
+
+    if (!newComment) {
+        return res.status(400).json({ message: "Review content is required." });
+    }
+
+    let filtered_book = books[isbn];
+    
+    if (filtered_book) {
+        try {
+            // Simulate an asynchronous operation (e.g., database save)
+            // Assuming you might have a function to save the review
+            filtered_book['reviews'] = newComment; // Update review
+            books[isbn] = filtered_book;
+
+            // If you have an async operation, it would look something like this:
+            // await saveReviewToDatabase(isbn, req.body.review);
+
+            return res.status(200).send(`The review for the book with ISBN ${isbn} has been added/updated. Current review: ${books[isbn].reviews}`);
+        } catch (error) {
+            console.error("Error updating review:", error);
+            return res.status(500).json({ message: "Internal Server Error" });
+        }
+    } else {
+        return res.status(404).json({ message: "Unable to find this ISBN!" });
+    }
+});
+>>>>>>> aaaf41aebdcf271eb4cc905ca8491b6378998313
+
+regd_users.delete("/auth/review/:isbn", (req, res) => {
+    const isbn = req.params.isbn;
+    console.log("ISBN:", isbn);
+
+    if (books[isbn]) {
+        try {
+            books[isbn].reviews = {}; // Delete the specific review
+            return res.status(200).json({ message: "Book review successfully deleted." });
+        } catch(err) {
+            return res.status(404).json({ message: "Book doesn't exist!" });
+        }
+    }
+});
+
+module.exports.authenticated = regd_users; // module.exports.authenticated = regd_users;
 module.exports.isValid = isValid;
 module.exports.users = users;
