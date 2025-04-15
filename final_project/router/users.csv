@@ -1,4 +1,5 @@
-email,password,username,isAdmin
-user1@example.com,password123,User1,false
-admin@example.com,adminpassword,Admin,true
-user2@example.com,password456,User2,false
+username,password,isAdmin
+user1@example.com,password123,false
+admin@example.com,adminpassword,true
+user2@example.com,password456,false
+testing2@example.com,testingPWD,false

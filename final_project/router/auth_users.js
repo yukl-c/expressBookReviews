@@ -1,9 +1,12 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-let books = require("./booksdb.js");
+let books = require("./general.js").books;
 const csvParser = require('csv-parser');
 const fs = require('fs');
 const bodyParser = require('body-parser');
+const { userInfo } = require('os');
+const fastCsv = require("fast-csv");
+const { loadBooksFromCSV, UpdateBooksReviewIntoCSV } = require('./general.js');
 
 const regd_users = express.Router();
 
@@ -25,13 +28,32 @@ function loadUsersFromCSV() {
                 userArray.push(row);
             })
             .on('end', () => {
-                console.log('CSV file successfully processed');
+                console.log('Users from CSV file successfully processed');
                 resolve(userArray);
             })
             .on('error', (err) => {
                 reject(err);
             });
     });
+}
+
+// add new user information into CSV file
+async function addNewUserIntoCSV (user_info) {
+    try {
+        users.push(user_info);
+        await new Promise((resolve, reject) => {
+            const writeStream = fs.createWriteStream("./router/users.csv");
+            fastCsv
+                .write(users, { headers: true }) 
+                .pipe(writeStream)
+                .on('finish', resolve)
+                .on('error', reject);
+        });
+
+        console.log('Users from CSV file updated successfully!');
+    } catch (error) {
+        console.error('Error updating users from CSV file:', error);
+    }
 }
 
 // Load users data when the server starts
@@ -41,6 +63,15 @@ loadUsersFromCSV()
         console.log(users);
     })
     .catch((err) => console.error(err));
+
+// Load books data when the server starts
+loadBooksFromCSV()
+    .then((bookArray) => {
+        console.log("Books loaded successfully:", bookArray);
+    })
+    .catch((err) => {
+        console.error("Error loading books:", err);
+    });
 
 const isValid = (username)=>{ //returns boolean
 //write code to check is the username is valid
@@ -94,52 +125,49 @@ regd_users.get("/auth/get_message", (req, res) => {
 // Add a book review
 regd_users.put("/auth/review/:isbn", async (req, res) => {
     const isbn = req.params.isbn;
-    console.log("ISBN:", isbn);
     const newComment = req.body.review;
-    // Log the request body for debugging
-    console.log("Request review:", newComment);
 
-    if (!newComment) {
-        return res.status(400).json({ message: "Review content is required." });
-    }
+    try {    
+        if (newComment) {
+            await UpdateBooksReviewIntoCSV(newComment, isbn);
 
-    let filtered_book = books[isbn];
-    
-    if (filtered_book) {
-        try {
-            // Simulate an asynchronous operation (e.g., database save)
-            // Assuming you might have a function to save the review
-            filtered_book['reviews'] = newComment; // Update review
-            books[isbn] = filtered_book;
-
-            // If you have an async operation, it would look something like this:
-            // await saveReviewToDatabase(isbn, req.body.review);
-
-            return res.status(200).send(`The review for the book with ISBN ${isbn} has been added/updated. Current review: ${books[isbn].reviews}`);
-        } catch (error) {
-            console.error("Error updating review:", error);
-            return res.status(500).json({ message: "Internal Server Error" });
+            const booksArray = await loadBooksFromCSV();
+            books.length = 0;
+            books.push(...booksArray);
+            console.log(books);
+            return res.status(200).json({ message: "The review is successfully updated. Now you can see the updated review" });
+        } else {
+            return res.status(400).json({ message: "Review content is required." });
         }
-    } else {
-        return res.status(404).json({ message: "Unable to find this ISBN!" });
+    } catch (error) {
+        console.error(err);
+        return res.status(500).json({ message: "Internal Server Error" });
     }
+        
+    
 });
 
-regd_users.delete("/auth/review/:isbn", (req, res) => {
+// Clear a book review
+regd_users.delete("/auth/review/:isbn", async (req, res) => {
     const isbn = req.params.isbn;
     console.log("ISBN:", isbn);
 
-    if (books[isbn]) {
-        try {
-            books[isbn].reviews = {}; // Delete the specific review
-            return res.status(200).json({ message: "Book review successfully deleted." });
-        } catch(err) {
-            return res.status(404).json({ message: "Book doesn't exist!" });
-        }
+    try { 
+        const clearComment = '';
+        await UpdateBooksReviewIntoCSV(clearComment, isbn);
+
+        const booksArray = await loadBooksFromCSV();
+        books.length = 0;
+        books.push(...booksArray);
+        console.log(books);
+        return res.status(200).json({ message: "The review is successfully removed. Now you can see the updated review" });
+    } catch (error) {
+        console.error(err);
+        return res.status(500).json({ message: "Internal Server Error" });
     }
 });
 
-regd_users.post("/auth/logout", (req, res) => {
+regd_users.post("/auth/logout", (req, res) => { // for user to logout
     if (req.session.authorization) { // Get the authorization object stored in the session
         token = req.session.authorization['accessToken'];
         blacklist.add(token);
@@ -154,7 +182,11 @@ regd_users.post("/auth/logout", (req, res) => {
     }
  });
 
+
+
 module.exports.authenticated = regd_users; // module.exports.authenticated = regd_users;
 module.exports.isValid = isValid;
 module.exports.users = users;
 module.exports.blacklist = blacklist;
+module.exports.addNewUserIntoCSV = addNewUserIntoCSV;
+module.exports.loadUsersFromCSV = loadUsersFromCSV;

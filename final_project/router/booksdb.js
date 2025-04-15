@@ -8,7 +8,6 @@ let books = {
       7: {"author": "Unknown","title": "Nj\u00e1l's Saga", "reviews": {} },
       8: {"author": "Jane Austen","title": "Pride and Prejudice", "reviews": {} },
       9: {"author": "Honor\u00e9 de Balzac","title": "Le P\u00e8re Goriot", "reviews": {} },
-      10: {"author": "Samuel Beckett","title": "Molloy, Malone Dies, The Unnamable, the trilogy", "reviews": {} }
 }
 
 module.exports=books;
