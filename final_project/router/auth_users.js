@@ -6,7 +6,7 @@ const fs = require('fs');
 const bodyParser = require('body-parser');
 const { userInfo } = require('os');
 const fastCsv = require("fast-csv");
-const { loadBooksFromCSV, UpdateBooksReviewIntoCSV } = require('./general.js');
+const { loadBooksFromCSV, updateBooksReviewIntoCSV, addBookIntoCSV, isValidBook, removeBookIntoCSV } = require('./general.js');
 
 const regd_users = express.Router();
 
@@ -18,6 +18,16 @@ let blacklist = new Set();
 // Middleware to parse incoming JSON requests
 regd_users.use(bodyParser.json());
 
+// check whether the user is admin or not
+function inspectAdmin(req, res, next) {
+    // Assuming `req.user` contains authenticated user info
+    if (req.user && req.user.isAdmin === true) {
+        next(); // User is an admin, proceed to the next function
+    } else {
+        return res.status(403).json({ message: "Access denied: Admins only." });
+    }
+  }
+   
 // Load users from CSV file into memory
 function loadUsersFromCSV() {
     return new Promise((resolve, reject) => {
@@ -103,7 +113,9 @@ regd_users.post("/login", (req,res) => {
   if (authenticatedUser(loginUserName, loginPassword)) {
         // Generate JWT access token
         let accessToken = jwt.sign({
-            data: loginPassword
+            data: loginPassword,
+            isAdmin: (users.find(user => user.username === loginUserName).isAdmin === 'true')
+            // add isAdmin status in jwt
         }, 'access', { expiresIn: 60 * 10 });
 
         // Store access token and username in session
@@ -118,7 +130,13 @@ regd_users.post("/login", (req,res) => {
 
 // Main endpoint to be accessed by authenticated users
 regd_users.get("/auth/get_message", (req, res) => {
+    console.log(req.user);
     return res.status(200).json({ message: "Hello, You are an authenticated user. Congratulations!" });
+  });
+
+  // Main endpoint to be accessed by authenticated admins
+regd_users.get("/auth/admin/get_message", inspectAdmin ,(req, res) => {
+    return res.status(200).json({ message: "Hello, You are an authenticated Admin. Congratulations!" });
   });
 
 
@@ -129,7 +147,7 @@ regd_users.put("/auth/review/:isbn", async (req, res) => {
 
     try {    
         if (newComment) {
-            await UpdateBooksReviewIntoCSV(newComment, isbn);
+            await updateBooksReviewIntoCSV(newComment, isbn);
 
             const booksArray = await loadBooksFromCSV();
             books.length = 0;
@@ -154,7 +172,7 @@ regd_users.delete("/auth/review/:isbn", async (req, res) => {
 
     try { 
         const clearComment = '';
-        await UpdateBooksReviewIntoCSV(clearComment, isbn);
+        await updateBooksReviewIntoCSV(clearComment, isbn);
 
         const booksArray = await loadBooksFromCSV();
         books.length = 0;
@@ -167,6 +185,56 @@ regd_users.delete("/auth/review/:isbn", async (req, res) => {
     }
 });
 
+// For admin only: add a new book
+regd_users.post("/auth/admin/add_book", inspectAdmin, async (req, res) => {
+    const newBookTitle = req.body.title;
+    const newBookAuthor = req.body.author;
+  
+    if (!newBookTitle || !newBookAuthor) {
+      return res.status(404).json({ message: "Missing Input" });
+    }
+  
+    if (isValidBook(newBookTitle)) {
+      new_book = { "title": newBookTitle, "author": newBookAuthor, "reviews": ""}
+      
+      await addBookIntoCSV(new_book);
+
+       // Reload the books array from the CSV file
+       const booksArray = await loadBooksFromCSV();
+       books.length = 0; // Clear the existing users array
+       books.push(...booksArray); // Update the users array with the latest data
+       console.log(books);
+
+      return res.status(200).json({ message: "Book is successfully added. Now you can check the book list" });
+    } else {
+      return res.status(404).json({ message: "Book already exists!" });
+    }
+  });
+
+// For admin only: remove existing book
+regd_users.delete("/auth/admin/remove_book", inspectAdmin, async (req, res) => {
+    const removeBookTitle = req.body.title;
+  
+    if (!removeBookTitle) {
+      return res.status(404).json({ message: "Missing Input" });
+    }
+  
+    if (!isValidBook(removeBookTitle)) {
+      await removeBookIntoCSV(removeBookTitle);
+
+       // Reload the books array from the CSV file
+       const booksArray = await loadBooksFromCSV();
+       books.length = 0; // Clear the existing users array
+       books.push(...booksArray); // Update the users array with the latest data
+       console.log(books);
+
+      return res.status(200).json({ message: "Book is successfully removed. Now you can check the book list" });
+    } else {
+      return res.status(404).json({ message: "Book is not found!" });
+    }
+  });
+
+// logout
 regd_users.post("/auth/logout", (req, res) => { // for user to logout
     if (req.session.authorization) { // Get the authorization object stored in the session
         token = req.session.authorization['accessToken'];

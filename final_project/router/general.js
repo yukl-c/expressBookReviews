@@ -15,6 +15,12 @@ let books = [];
 // Middleware to parse incoming JSON requests
 public_users.use(bodyParser.json());
 
+const isValidBook = (title)=>{ //returns boolean
+  //write code to check is the book title is valid
+      let userWithSameTitle = books.filter(book => book.title === title);
+      return (userWithSameTitle.length === 0) ? true : false;
+  }
+
 // Load books from CSV file into memory
 function loadBooksFromCSV() {
     return new Promise((resolve, reject) => {
@@ -37,7 +43,7 @@ function loadBooksFromCSV() {
 
 
 // Update book review into CSV file
-async function UpdateBooksReviewIntoCSV (update_bookReview, isbn) {
+async function updateBooksReviewIntoCSV (update_bookReview, isbn) {
     try {
         // Find the index of the book with the given ISBN
         let book_ind = books.findIndex(book => book.isbn === String(isbn));
@@ -64,7 +70,49 @@ async function UpdateBooksReviewIntoCSV (update_bookReview, isbn) {
     }
 }
 
+// Add book into the CSV file
+async function addBookIntoCSV (isbn) {
+  try {
+    new_book = { 'isbn': books.length + 1, ...book_info };
+    console.log(JSON.stringify(new_book));
+    books.push(new_book);
+    await new Promise((resolve, reject) => {
+    const writeStream = fs.createWriteStream("./router/books.csv");
+    fastCsv
+      .write(books, { headers: true }) 
+      .pipe(writeStream)
+      .on('finish', resolve)
+      .on('error', reject);
+    });
+    console.log('New book from CSV file is added successfully!');
+  } catch (error) {
+    console.error('Error adding book from CSV file:', error);
+  }
+}
 
+// Remove book from the CSV file
+async function removeBookIntoCSV (title) {
+    try {
+      // filter away the selected book from the array
+      filtered_books = books.filter(book => book.title != title);
+      console.log("filtered books: ",filtered_books);
+
+      await new Promise((resolve, reject) => {
+      const writeStream = fs.createWriteStream("./router/books.csv");
+      fastCsv
+        .write(filtered_books, { headers: true }) 
+        .pipe(writeStream)
+        .on('finish', resolve)
+        .on('error', reject);
+      });
+      console.log('The book from CSV file is removed successfully!');
+    } catch (error) {
+      console.error('Error removing book from CSV file:', error);
+    }
+}
+
+
+// Register new user
 public_users.post("/register", async (req, res) => {
     const registerUserName = req.body.username;
     const registerPassword = req.body.password;
@@ -175,4 +223,7 @@ public_users.get('/reviews/:isbn', function (req, res) {
 module.exports.general = public_users;
 module.exports.books = books;
 module.exports.loadBooksFromCSV = loadBooksFromCSV;
-module.exports.UpdateBooksReviewIntoCSV = UpdateBooksReviewIntoCSV;
+module.exports.updateBooksReviewIntoCSV = updateBooksReviewIntoCSV;
+module.exports.addBookIntoCSV = addBookIntoCSV;
+module.exports.isValidBook = isValidBook;
+module.exports.removeBookIntoCSV = removeBookIntoCSV;
